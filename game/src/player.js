@@ -17,6 +17,8 @@ window.VB.player = (function() {
   let camPitch = 0.2;
   let timeSinceDamage = 10;
   let walkAnimTime = 0;
+  let camFov = 58;
+  let skidTimer = 0;
 
   // Muzzle flash / tracer visual elements
   let muzzleFlashMesh = null;
@@ -194,6 +196,9 @@ window.VB.player = (function() {
         if (VB.audio && typeof VB.audio.crash === 'function') {
           VB.audio.crash(speedLoss / 20);
         }
+        if (VB.fx && VB.fx.sparks) {
+          VB.fx.sparks(centers[0].x, 0.5, centers[0].z, 14);
+        }
         carRec.health = Math.max(0, (carRec.health || 100) - Math.floor(speedLoss * 2));
       }
     }
@@ -215,6 +220,14 @@ window.VB.player = (function() {
       const look = VB.input.takeLook();
       camYaw -= look.dx * 0.0026;
       camPitch = Math.max(-0.05, Math.min(0.55, camPitch + look.dy * 0.0026));
+    }
+
+    // Radio toggle (KeyM)
+    if (VB.input && typeof VB.input.pressed === 'function' && VB.input.pressed('KeyM') && VB.audio && VB.audio.radioToggle) {
+      const radioNowOn = VB.audio.radioToggle();
+      if (VB.hud && VB.hud.toast) {
+        VB.hud.toast(radioNowOn ? 'Radio: Vesper Waves ON' : 'Radio OFF');
+      }
     }
 
     // F key interaction: enter/exit car
@@ -408,6 +421,9 @@ window.VB.player = (function() {
         if (keys['KeyA'] || keys['ArrowLeft']) steer += 1;
         if (keys['Space']) handbrake = true;
       }
+      if (VB.input && typeof VB.input.pressed === 'function' && VB.input.pressed('KeyH') && VB.audio && VB.audio.horn) {
+        VB.audio.horn();
+      }
 
       const topSpeed = VB.config && VB.config.carTopSpeed ? VB.config.carTopSpeed : 38;
       const revSpeed = VB.config && VB.config.carReverseSpeed ? VB.config.carReverseSpeed : 10;
@@ -419,6 +435,28 @@ window.VB.player = (function() {
         car.speed = Math.max(-revSpeed, car.speed - accel * dt);
       } else {
         car.speed *= handbrake ? 0.82 : 0.96;
+      }
+
+      skidTimer -= dt;
+      var wantSkid = (handbrake && Math.abs(car.speed) > 7) || (Math.abs(steer) > 0.01 && Math.abs(car.speed) > 25);
+      if (wantSkid && skidTimer <= 0 && VB.fx && VB.fx.skid) {
+        skidTimer = 0.09;
+        var fx = -Math.sin(car.heading);
+        var fz = -Math.cos(car.heading);
+        var rx = Math.cos(car.heading);
+        var rz = -Math.sin(car.heading);
+        var cx = car.x - fx * 1.3;
+        var cz = car.z - fz * 1.3;
+        var w1x = cx + rx * 0.95;
+        var w1z = cz + rz * 0.95;
+        var w2x = cx - rx * 0.95;
+        var w2z = cz - rz * 0.95;
+        VB.fx.skid(w1x, w1z, car.heading, Math.abs(car.speed) * 0.09 + 0.3);
+        VB.fx.skid(w2x, w2z, car.heading, Math.abs(car.speed) * 0.09 + 0.3);
+      }
+
+      if (throttle > 0 && VB.fx && VB.fx.exhaust) {
+        VB.fx.exhaust(car);
       }
 
       if (steer !== 0 && Math.abs(car.speed) > 0.5) {
@@ -493,6 +531,13 @@ window.VB.player = (function() {
     // Camera update (unless shotMode is active and owns camera)
     if (VB.world && !VB.world.shotMode && VB.world.camera) {
       const camera = VB.world.camera;
+      const targetFov = (mode === 'car' && car) ? (58 + 11 * Math.pow(Math.min(1, Math.abs(car.speed) / (VB.config && VB.config.carTopSpeed ? VB.config.carTopSpeed : 38)), 2)) : 58;
+      camFov += (targetFov - camFov) * Math.min(1, dt * 5);
+      if (Math.abs(camera.fov - camFov) > 0.01) {
+        camera.fov = camFov;
+        camera.updateProjectionMatrix();
+      }
+
       if (mode === 'foot') {
         const dist = 6.5;
         const targetCamX = x + Math.sin(camYaw) * dist * Math.cos(camPitch);

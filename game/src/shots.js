@@ -54,28 +54,28 @@ window.VB.shots = (function() {
       if (shotName === 'vista') {
         const hero = VB.cars.heroCar;
         if (hero) {
-          hero.x = 26;
-          hero.z = 296;
-          hero.heading = -0.5;
+          hero.x = 4;
+          hero.z = 320;
+          hero.heading = -1.0;
           hero.speed = 0;
-          hero.mesh.position.set(26, 0, 296);
-          hero.mesh.rotation.y = -0.5;
+          hero.mesh.position.set(4, 0, 320);
+          hero.mesh.rotation.y = -1.0;
         }
         VB.player.mode = 'foot';
         VB.player.car = null;
-        VB.player.x = 31.5;
-        VB.player.z = 292;
-        const targetDx = 26 - 31.5;
-        const targetDz = 296 - 292;
+        VB.player.x = 14;
+        VB.player.z = 313;
+        const targetDx = 4 - 14;
+        const targetDz = 320 - 313;
         const pHeading = Math.atan2(-targetDx, -targetDz);
         VB.player.heading = pHeading;
         if (VB.player.mesh) {
           VB.player.mesh.visible = true;
-          VB.player.mesh.position.set(31.5, 0, 292);
+          VB.player.mesh.position.set(14, 0, 313);
           VB.player.mesh.rotation.y = pHeading;
         }
         step(90);
-        setCam(52, 19, 330, -10, 8, 20);
+        setCam(16, 12, 352, -10, 7, 190);
         finish();
       } else if (shotName === 'drive') {
         VB.missions.forceState(0, 'active');
@@ -102,6 +102,17 @@ window.VB.shots = (function() {
             setCam(hero.x - fx * 7.5, 2.8, hero.z - fz * 7.5, hero.x + fx * 8, 1.0, hero.z + fz * 8);
           }
         }
+        const hz = hero ? hero.z : 120;
+        const carA = VB.cars.spawnScripted({ kind: 'coupe', color: 0xe2725b, x: 40.8, z: hz - 26, heading: 0 });
+        if (carA) {
+          carA.avenue = { axis: 'z', at: 37 };
+          carA.dir = -1;
+          carA.speed = 11;
+          carA.targetSpeed = 11;
+          carA.parked = false;
+        }
+        VB.cars.spawnScripted({ kind: 'convertible', color: 0xf2e394, x: 31.2, z: hz - 13, heading: 0 });
+        VB.cars.spawnScripted({ kind: 'truck', color: 0x7fb2e5, x: 43.8, z: hz - 44, heading: Math.PI });
         finish();
       } else if (shotName === 'chase') {
         VB.missions.forceState(2, 'active');
@@ -178,6 +189,48 @@ window.VB.shots = (function() {
           const fx = -Math.sin(h);
           const fz = -Math.cos(h);
           setCam(hero.x - fx * 7.5, 2.8, hero.z - fz * 7.5, hero.x + fx * 8, 1.5, hero.z + fz * 8);
+        }
+        if (VB.fx) {
+          const h = hero.heading;
+          const fx = -Math.sin(h);
+          const fz = -Math.cos(h);
+          const rx = Math.cos(h);
+          const rz = -Math.sin(h);
+          for (let i = 0; i < 8; i++) {
+            const bx = hero.x - fx * (2 + i * 1.6);
+            const bz = hero.z - fz * (2 + i * 1.6);
+            VB.fx.skid(bx + rx * 0.95, bz + rz * 0.95, h, 1.7);
+            VB.fx.skid(bx - rx * 0.95, bz - rz * 0.95, h, 1.7);
+          }
+          VB.fx.sparks(hero.x + fx * 2.2 + rx * 0.9, 0.5, hero.z + fz * 2.2 + rz * 0.9, 26);
+        }
+        finish();
+      } else if (shotName === 'race') {
+        const hero = VB.cars.heroCar;
+        if (hero) {
+          hero.x = -30;
+          hero.z = 314.2;
+          hero.heading = Math.PI / 2;
+          hero.speed = 15;
+          hero.mesh.position.set(-30, 0, 314.2);
+          hero.mesh.rotation.y = Math.PI / 2;
+          VB.player.car = hero;
+          VB.player.mode = 'car';
+          hero.drivenByPlayer = true;
+          if (VB.player.mesh) VB.player.mesh.visible = false;
+          VB.player.autopilot = { throttle: 0.85, steer: 0 };
+        }
+        VB.missions.startRace();
+        VB.cars.spawnScripted({ kind: 'convertible', color: 0xe2725b, x: -72, z: 301, heading: Math.PI / 2 });
+        VB.cars.spawnScripted({ kind: 'pickup', color: 0x7fc8a9, x: -92, z: 302, heading: Math.PI / 2 });
+        for (let i = 0; i < 5; i++) {
+          step(10);
+          if (hero) {
+            const h = hero.heading;
+            const fx = -Math.sin(h);
+            const fz = -Math.cos(h);
+            setCam(hero.x - fx * 7.5, 2.8, hero.z - fz * 7.5, hero.x + fx * 9, 1.1, hero.z + fz * 9);
+          }
         }
         finish();
       } else if (shotName === 'mission') {

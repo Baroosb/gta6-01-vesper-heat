@@ -16,6 +16,7 @@ window.VB.cars = (function() {
   }
 
   const rng = createRandom(20261118 + 101);
+  const rngCars = rng;
 
   function createColoredBox(width, height, depth, hexColor) {
     const geom = new THREE.BoxGeometry(width, height, depth);
@@ -99,6 +100,16 @@ window.VB.cars = (function() {
     return merged;
   }
 
+  const headlightConeMat = new THREE.MeshBasicMaterial({
+    color: 0xffe9b0,
+    transparent: true,
+    opacity: 0.10,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    fog: false
+  });
+
   function makeCarMesh(kind, colorHex) {
     const group = new THREE.Group();
     const geos = [];
@@ -111,104 +122,86 @@ window.VB.cars = (function() {
     const headlightColor = 0xfff8d6;
     const taillightColor = 0xcc2222;
 
-    if (kind === 'sedan' || kind === 'police') {
-      // Main body
-      const body = createColoredBox(1.8, 0.6, 4.2, bodyColor);
-      body.translate(0, 0.5, 0);
-      geos.push(body);
-
-      // Cabin mid
-      const cabin = createColoredBox(1.6, 0.5, 2.0, glassColor);
-      cabin.translate(0, 1.05, -0.1);
-      geos.push(cabin);
-
-      // Doors trim for police
-      if (isPolice) {
-        const doorL = createColoredBox(0.05, 0.55, 1.8, trimColor);
-        doorL.translate(0.91, 0.5, 0);
-        geos.push(doorL);
-        const doorR = createColoredBox(0.05, 0.55, 1.8, trimColor);
-        doorR.translate(-0.91, 0.5, 0);
-        geos.push(doorR);
-      }
-
-      // Bumpers & lights
-      const bFront = createColoredBox(1.7, 0.2, 0.2, trimColor);
-      bFront.translate(0, 0.35, -2.1);
-      geos.push(bFront);
-      const bRear = createColoredBox(1.7, 0.2, 0.2, trimColor);
-      bRear.translate(0, 0.35, 2.1);
-      geos.push(bRear);
-
-      const hLightL = createColoredBox(0.3, 0.1, 0.05, headlightColor);
-      hLightL.translate(0.6, 0.4, -2.12);
-      geos.push(hLightL);
-      const hLightR = createColoredBox(0.3, 0.1, 0.05, headlightColor);
-      hLightR.translate(-0.6, 0.4, -2.12);
-      geos.push(hLightR);
-
-      const tLightL = createColoredBox(0.3, 0.1, 0.05, taillightColor);
-      tLightL.translate(0.6, 0.4, 2.12);
-      geos.push(tLightL);
-      const tLightR = createColoredBox(0.3, 0.1, 0.05, taillightColor);
-      tLightR.translate(-0.6, 0.4, 2.12);
-      geos.push(tLightR);
-
-    } else if (kind === 'coupe') {
-      // Lower, longer hood
-      const body = createColoredBox(1.8, 0.5, 4.2, bodyColor);
-      body.translate(0, 0.45, 0);
-      geos.push(body);
-
-      const cabin = createColoredBox(1.5, 0.45, 1.6, glassColor);
-      cabin.translate(0, 0.92, 0.2);
-      geos.push(cabin);
-
-      const bFront = createColoredBox(1.7, 0.18, 0.2, trimColor);
-      bFront.translate(0, 0.33, -2.1);
-      geos.push(bFront);
-      const bRear = createColoredBox(1.7, 0.18, 0.2, trimColor);
-      bRear.translate(0, 0.33, 2.1);
-      geos.push(bRear);
-
-    } else if (kind === 'van') {
-      // Tall box, cabin front
-      const body = createColoredBox(2.0, 1.6, 5.0, bodyColor);
-      body.translate(0, 1.0, 0);
-      geos.push(body);
-
-      const windshield = createColoredBox(1.9, 0.6, 0.8, glassColor);
-      windshield.translate(0, 1.3, -2.1);
-      geos.push(windshield);
-
-      const bFront = createColoredBox(1.9, 0.2, 0.2, trimColor);
-      bFront.translate(0, 0.3, -2.5);
-      geos.push(bFront);
-
-    } else if (kind === 'pickup') {
-      // Open bed rear
-      const cab = createColoredBox(1.8, 1.1, 2.2, bodyColor);
-      cab.translate(0, 0.75, -0.8);
-      geos.push(cab);
-
-      const bed = createColoredBox(1.8, 0.6, 2.4, bodyColor);
-      bed.translate(0, 0.5, 1.2);
-      geos.push(bed);
-
-      const tailgate = createColoredBox(1.7, 0.3, 0.1, trimColor);
-      tailgate.translate(0, 0.5, 2.4);
-      geos.push(tailgate);
+    function B(w, h, d, x, y, z, color) {
+      const box = createColoredBox(w, h, d, color !== undefined ? color : bodyColor);
+      box.translate(x, y, z);
+      geos.push(box);
+    }
+    function G(w, h, d, x, y, z) {
+      const box = createColoredBox(w, h, d, glassColor);
+      box.translate(x, y, z);
+      geos.push(box);
     }
 
-    // Wheels (4 short wide cylinders)
+    if (kind === 'sedan' || kind === 'police') {
+      B(1.8, 0.6, 4.2, 0, 0.5, 0);
+      G(1.6, 0.5, 2.0, 0, 1.05, -0.1);
+      if (isPolice) {
+        B(0.05, 0.55, 1.8, 0.91, 0.5, 0, trimColor);
+        B(0.05, 0.55, 1.8, -0.91, 0.5, 0, trimColor);
+      }
+      B(1.7, 0.2, 0.2, 0, 0.35, -2.1, trimColor);
+      B(1.7, 0.2, 0.2, 0, 0.35, 2.1, trimColor);
+      B(0.3, 0.1, 0.05, 0.6, 0.4, -2.12, headlightColor);
+      B(0.3, 0.1, 0.05, -0.6, 0.4, -2.12, headlightColor);
+      B(0.3, 0.1, 0.05, 0.6, 0.4, 2.12, taillightColor);
+      B(0.3, 0.1, 0.05, -0.6, 0.4, 2.12, taillightColor);
+    } else if (kind === 'coupe') {
+      B(1.8, 0.5, 4.2, 0, 0.45, 0);
+      G(1.5, 0.45, 1.6, 0, 0.92, 0.2);
+      B(1.7, 0.18, 0.2, 0, 0.33, -2.1, trimColor);
+      B(1.7, 0.18, 0.2, 0, 0.33, 2.1, trimColor);
+    } else if (kind === 'convertible') {
+      B(1.8, 0.52, 4.3, 0, 0.46, 0);
+      B(1.7, 0.3, 0.7, 0, 0.38, -2.2);
+      G(1.6, 0.42, 0.07, 0, 0.95, -0.85);
+      B(1.62, 0.22, 2.0, 0, 0.76, 0.35, 0x101014);
+      B(0.55, 0.42, 0.55, -0.42, 0.88, 0.2, trimColor);
+      B(0.55, 0.42, 0.55, 0.42, 0.88, 0.2, trimColor);
+      B(0.55, 0.5, 0.14, -0.42, 1.02, 0.52, trimColor);
+      B(0.55, 0.5, 0.14, 0.42, 1.02, 0.52, trimColor);
+      B(1.5, 0.09, 0.09, 0, 1.12, 0.85, trimColor);
+      B(1.7, 0.18, 0.2, 0, 0.33, -2.1, trimColor);
+      B(1.7, 0.18, 0.2, 0, 0.33, 2.1, trimColor);
+    } else if (kind === 'van') {
+      B(2.0, 1.6, 5.0, 0, 1.0, 0);
+      G(1.9, 0.6, 0.8, 0, 1.3, -2.1);
+      B(1.9, 0.2, 0.2, 0, 0.3, -2.5, trimColor);
+    } else if (kind === 'pickup') {
+      B(1.8, 1.1, 2.2, 0, 0.75, -0.8);
+      B(1.8, 0.6, 2.4, 0, 0.5, 1.2);
+      B(1.7, 0.3, 0.1, 0, 0.5, 2.4, trimColor);
+    } else if (kind === 'truck') {
+      B(2.1, 0.3, 5.6, 0, 0.5, 0, 0x2a2d31);
+      B(2.05, 1.3, 1.8, 0, 1.3, -1.85);
+      G(1.9, 0.55, 0.08, 0, 1.55, -2.76);
+      B(2.2, 2.1, 3.4, 0, 1.55, 0.95, 0xd6dade);
+      B(2.24, 2.1, 0.1, 0, 1.55, 0.2, 0xb9bfc6);
+      B(2.24, 2.1, 0.1, 0, 1.55, 0.95, 0xb9bfc6);
+      B(2.24, 2.1, 0.1, 0, 1.55, 1.7, 0xb9bfc6);
+      B(2.15, 0.28, 0.25, 0, 0.35, -2.85, trimColor);
+      B(2.15, 0.28, 0.25, 0, 0.35, 2.85, trimColor);
+      B(0.4, 0.18, 0.06, -0.7, 0.85, -2.78, 0xfff2b0);
+      B(0.4, 0.18, 0.06, 0.7, 0.85, -2.78, 0xfff2b0);
+      B(0.4, 0.18, 0.06, -0.85, 0.85, 2.72, 0xff3b30);
+      B(0.4, 0.18, 0.06, 0.85, 0.85, 2.72, 0xff3b30);
+    }
+
+    let wheelR = 0.35, wheelZ = 1.3;
+    if (kind === 'convertible') { wheelR = 0.35; wheelZ = 1.35; }
+    else if (kind === 'van') { wheelR = 0.38; wheelZ = 1.6; }
+    else if (kind === 'pickup') { wheelR = 0.4; wheelZ = 1.4; }
+    else if (kind === 'truck') { wheelR = 0.48; wheelZ = 1.9; }
+    const wheelX = (kind === 'truck') ? 1.02 : 0.95;
+
     const wheelPositions = [
-      { x: 0.95, z: 1.3 }, { x: -0.95, z: 1.3 },
-      { x: 0.95, z: -1.3 }, { x: -0.95, z: -1.3 }
+      { x: wheelX, z: wheelZ }, { x: -wheelX, z: wheelZ },
+      { x: wheelX, z: -wheelZ }, { x: -wheelX, z: -wheelZ }
     ];
     for (const wp of wheelPositions) {
-      const wheel = createColoredCylinder(0.35, 0.35, 0.3, 8, wheelColor);
+      const wheel = createColoredCylinder(wheelR, wheelR, 0.3, 8, wheelColor);
       wheel.rotateZ(Math.PI / 2);
-      wheel.translate(wp.x, 0.35, wp.z);
+      wheel.translate(wp.x, wheelR, wp.z);
       geos.push(wheel);
     }
 
@@ -218,6 +211,18 @@ window.VB.cars = (function() {
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     group.add(mesh);
+
+    const coneGeom = new THREE.CylinderGeometry(1.15, 0.14, 4.6, 10, 1, true);
+    coneGeom.rotateX(-Math.PI / 2);
+    const coneL = new THREE.Mesh(coneGeom, headlightConeMat);
+    coneL.position.set(-0.6, kind === 'truck' ? 0.85 : 0.42, kind === 'truck' ? -5.3 : -4.45);
+    coneL.visible = false;
+    group.add(coneL);
+    const coneR = new THREE.Mesh(coneGeom, headlightConeMat);
+    coneR.position.set(0.6, kind === 'truck' ? 0.85 : 0.42, kind === 'truck' ? -5.3 : -4.45);
+    coneR.visible = false;
+    group.add(coneR);
+    group.userData.headlightCones = [coneL, coneR];
 
     if (isPolice) {
       const lightBarGroup = new THREE.Group();
@@ -244,11 +249,11 @@ window.VB.cars = (function() {
     all.length = 0;
     heroCar = null;
 
-    const civilianColors = [0x224488, 0x882222, 0x338833, 0x887722, 0x555555, 0x8844aa, 0xcc8833, 0x228888];
+    const civilianColors = [0x224488, 0x882222, 0x338833, 0x887722, 0x555555, 0x8844aa, 0xcc8833, 0x228888, 0xe2725b, 0x7fc8a9, 0xe8dcc0, 0x7fb2e5, 0xc45ba0, 0xf2e394];
 
     // 1. Spawn 18 traffic cars
     const roadLines = VB.city && VB.city.roadLines ? VB.city.roadLines : [];
-    const kinds = ['sedan', 'coupe', 'van', 'pickup'];
+    const kinds = ['sedan', 'coupe', 'van', 'pickup', 'convertible', 'truck'];
 
     for (let i = 0; i < 18; i++) {
       if (roadLines.length === 0) break;
@@ -294,7 +299,8 @@ window.VB.cars = (function() {
         driverName: 'Civilian',
         drivenByPlayer: false,
         aiDriven: false,
-        lightBar: mesh.userData.lightBar || null
+        lightBar: mesh.userData.lightBar || null,
+        cones: mesh.userData.headlightCones || null
       };
       all.push(car);
     }
@@ -329,7 +335,8 @@ window.VB.cars = (function() {
         driverName: 'Parked',
         drivenByPlayer: false,
         aiDriven: false,
-        lightBar: mesh.userData.lightBar || null
+        lightBar: mesh.userData.lightBar || null,
+        cones: mesh.userData.headlightCones || null
       };
       all.push(car);
     }
@@ -363,7 +370,8 @@ window.VB.cars = (function() {
       driverName: 'Hero',
       drivenByPlayer: true,
       aiDriven: false,
-      lightBar: heroMesh.userData.lightBar || null
+      lightBar: heroMesh.userData.lightBar || null,
+      cones: heroMesh.userData.headlightCones || null
     };
     all.push(heroCar);
   }
@@ -404,7 +412,8 @@ window.VB.cars = (function() {
       driverName: 'Scripted',
       drivenByPlayer: false,
       aiDriven: (kind === 'police'),
-      lightBar: mesh.userData.lightBar || null
+      lightBar: mesh.userData.lightBar || null,
+      cones: mesh.userData.headlightCones || null
     };
     all.push(car);
     return car;
@@ -424,6 +433,233 @@ window.VB.cars = (function() {
     }
   }
 
+  let fxReady = false;
+  let fxTime = 0;
+  let sparkPoints = null;
+  let sparkPos = null;
+  let sparkVel = null;
+  let sparkLife = null;
+  let sparkColors = null;
+  const smokePool = [];
+  let smokeTexture = null;
+  const skidPool = [];
+  let skidIndex = 0;
+
+  function createSmokeTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(0.5, 'rgba(200,200,200,0.4)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  function fxInit() {
+    if (fxReady) return true;
+    if (!VB.world || !VB.world.scene) return false;
+    const scene = VB.world.scene;
+
+    smokeTexture = createSmokeTexture();
+
+    const sparkGeom = new THREE.BufferGeometry();
+    sparkPos = new Float32Array(240 * 3);
+    sparkVel = new Float32Array(240 * 3);
+    sparkLife = new Float32Array(240);
+    sparkColors = new Float32Array(240 * 3);
+    for (let i = 0; i < 240; i++) {
+      sparkPos[i * 3 + 1] = -999;
+      sparkLife[i] = 0;
+    }
+    sparkGeom.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+    sparkGeom.setAttribute('color', new THREE.BufferAttribute(sparkColors, 3));
+
+    const sparkMat = new THREE.PointsMaterial({
+      size: 0.5,
+      map: smokeTexture,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexColors: true
+    });
+    sparkPoints = new THREE.Points(sparkGeom, sparkMat);
+    sparkPoints.frustumCulled = false;
+    scene.add(sparkPoints);
+
+    const spriteMatBase = new THREE.SpriteMaterial({
+      map: smokeTexture,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false
+    });
+    for (let i = 0; i < 42; i++) {
+      const mat = spriteMatBase.clone();
+      const s = new THREE.Sprite(mat);
+      s.visible = false;
+      scene.add(s);
+      smokePool.push({ s, life: 0, max: 1, rise: 1.4, grow: 1, baseOp: 0.3 });
+    }
+
+    const skidGeom = new THREE.PlaneGeometry(0.3, 1);
+    const skidMat = new THREE.MeshBasicMaterial({
+      color: 0x08080a,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false
+    });
+    for (let i = 0; i < 220; i++) {
+      const mesh = new THREE.Mesh(skidGeom, skidMat);
+      mesh.rotation.order = 'YXZ';
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.visible = false;
+      scene.add(mesh);
+      skidPool.push(mesh);
+    }
+
+    fxReady = true;
+    return true;
+  }
+
+  const sparkPalette = [
+    [1, 0.85, 0.4],
+    [1, 0.6, 0.2],
+    [1, 0.95, 0.7]
+  ];
+
+  function fxSparks(x, y, z, n) {
+    if (!fxInit()) return;
+    let spawned = 0;
+    for (let i = 0; i < 240 && spawned < n; i++) {
+      if (sparkLife[i] <= 0) {
+        sparkPos[i * 3] = x;
+        sparkPos[i * 3 + 1] = y;
+        sparkPos[i * 3 + 2] = z;
+        sparkVel[i * 3] = (rngCars() * 2 - 1) * 3.4;
+        sparkVel[i * 3 + 1] = rngCars() * 3.6 + 0.6;
+        sparkVel[i * 3 + 2] = (rngCars() * 2 - 1) * 3.4;
+        sparkLife[i] = 0.35 + rngCars() * 0.25;
+        const col = sparkPalette[Math.floor(rngCars() * sparkPalette.length)];
+        sparkColors[i * 3] = col[0];
+        sparkColors[i * 3 + 1] = col[1];
+        sparkColors[i * 3 + 2] = col[2];
+        spawned++;
+      }
+    }
+  }
+
+  function fxSmoke(x, y, z, opts) {
+    if (!fxInit()) return;
+    opts = opts || {};
+    for (let i = 0; i < smokePool.length; i++) {
+      const sp = smokePool[i];
+      if (sp.life <= 0) {
+        sp.s.position.set(x, y, z);
+        const size = opts.size || 1;
+        sp.s.scale.set(size, size, 1);
+        if (opts.color !== undefined) {
+          sp.s.material.color.setHex(opts.color);
+        } else {
+          sp.s.material.color.setHex(0x9aa0a8);
+        }
+        sp.max = opts.life || 1;
+        sp.rise = opts.rise || 1.4;
+        sp.grow = opts.size || 1;
+        sp.baseOp = opts.opacity || 0.3;
+        sp.life = sp.max;
+        sp.s.material.opacity = sp.baseOp;
+        sp.s.visible = true;
+        break;
+      }
+    }
+  }
+
+  function fxSkid(x, z, heading, len) {
+    if (!fxInit()) return;
+    const mesh = skidPool[skidIndex % 220];
+    skidIndex++;
+    mesh.position.set(x, 0.045 + (skidIndex % 40) * 0.0004, z);
+    mesh.rotation.y = heading;
+    mesh.scale.set(1, len, 1);
+    mesh.visible = true;
+  }
+
+  function fxExhaust(car) {
+    if (!car._exhT) car._exhT = 0;
+    if (fxTime - car._exhT < 0.07) return;
+    car._exhT = fxTime;
+    const exX = car.x + Math.sin(car.heading) * 2.2;
+    const exZ = car.z + Math.cos(car.heading) * 2.2;
+    fxSmoke(exX, 0.3, exZ, { color: 0x9aa0a8, size: 0.35, life: 0.55, rise: 0.7, opacity: 0.22 });
+  }
+
+  function fxUpdate(dt) {
+    fxTime += dt;
+    if (!fxReady) return;
+
+    for (let i = 0; i < 240; i++) {
+      if (sparkLife[i] > 0) {
+        sparkLife[i] -= dt;
+        if (sparkLife[i] <= 0) {
+          sparkPos[i * 3 + 1] = -999;
+        } else {
+          sparkVel[i * 3 + 1] -= 9.8 * dt * 0.6;
+          sparkPos[i * 3] += sparkVel[i * 3] * dt;
+          sparkPos[i * 3 + 1] += sparkVel[i * 3 + 1] * dt;
+          sparkPos[i * 3 + 2] += sparkVel[i * 3 + 2] * dt;
+          if (sparkPos[i * 3 + 1] < 0.03) {
+            sparkPos[i * 3 + 1] = 0.03;
+            sparkVel[i * 3 + 1] *= -0.4;
+          }
+        }
+      }
+    }
+    if (sparkPoints && sparkPoints.geometry) {
+      sparkPoints.geometry.attributes.position.needsUpdate = true;
+      sparkPoints.geometry.attributes.color.needsUpdate = true;
+    }
+
+    for (let i = 0; i < smokePool.length; i++) {
+      const sp = smokePool[i];
+      if (sp.life > 0) {
+        sp.life -= dt;
+        if (sp.life <= 0) {
+          sp.s.visible = false;
+        } else {
+          const t = 1 - sp.life / sp.max;
+          sp.s.position.y += sp.rise * dt;
+          sp.s.scale.x += sp.grow * dt;
+          sp.s.scale.y += sp.grow * dt;
+          sp.s.material.opacity = sp.baseOp * (1 - t) * Math.min(1, t * 7);
+        }
+      }
+    }
+
+    for (let i = 0; i < all.length; i++) {
+      const car = all[i];
+      if (car.health < 60) {
+        car._smkAcc = (car._smkAcc || 0) + dt * (car.health < 25 ? 11 : (car.health <= 0 ? 14 : 5));
+        while (car._smkAcc > 1) {
+          car._smkAcc -= 1;
+          const fX = -Math.sin(car.heading);
+          const fZ = -Math.cos(car.heading);
+          const frontX = car.x + fX * 1.8;
+          const frontZ = car.z + fZ * 1.8;
+          fxSmoke(frontX, 1.0, frontZ, {
+            color: car.health < 25 ? 0x23232a : 0x4a4a52,
+            size: 0.9,
+            life: 1.1,
+            rise: 1.6,
+            opacity: 0.4
+          });
+        }
+      }
+    }
+  }
+
   function update(dt) {
     const colliders = VB.city && VB.city.colliders ? VB.city.colliders : [];
 
@@ -434,6 +670,10 @@ window.VB.cars = (function() {
         if (car.drivenByPlayer || car.aiDriven) {
           car.mesh.position.set(car.x, 0, car.z);
           car.mesh.rotation.y = car.heading;
+          if (car.cones) {
+            var lightsOn = car.drivenByPlayer || car.aiDriven || (car.avenue && car.speed > 0.5);
+            for (var ci = 0; ci < car.cones.length; ci++) car.cones[ci].visible = !!lightsOn;
+          }
         }
         continue;
       }
@@ -499,7 +739,14 @@ window.VB.cars = (function() {
       // Sync mesh
       car.mesh.position.set(car.x, 0, car.z);
       car.mesh.rotation.y = car.heading;
+
+      if (car.cones) {
+        var lightsOn = car.drivenByPlayer || car.aiDriven || (car.avenue && car.speed > 0.5);
+        for (var ci = 0; ci < car.cones.length; ci++) car.cones[ci].visible = !!lightsOn;
+      }
     }
+
+    fxUpdate(dt);
   }
 
   function resolveCircleBoxCollision(car, cx, cz, radius, box, fX, fZ) {
@@ -521,6 +768,14 @@ window.VB.cars = (function() {
     }
   }
 
+  const fxApi = {
+    sparks: fxSparks,
+    smoke: fxSmoke,
+    skid: fxSkid,
+    exhaust: fxExhaust,
+    update: fxUpdate
+  };
+
   return {
     all,
     init,
@@ -528,7 +783,10 @@ window.VB.cars = (function() {
     spawnScripted,
     remove,
     makeCarMesh,
+    fx: fxApi,
     get heroCar() { return heroCar; },
     set heroCar(val) { heroCar = val; }
   };
 })();
+
+window.VB.fx = window.VB.cars.fx;

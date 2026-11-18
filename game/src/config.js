@@ -147,5 +147,41 @@ VB.story = [
         spawnRivals: 0
       }
     ]
+  },
+  {
+    id: 'golden-hour-encore',
+    title: 'Golden Hour Encore',
+    giverLine: 'One for the road, Rafa: Serrano\'s leftover stash sits at the docks — run it to the Gilded Palm\'s vault before the light goes, and keep it quick.',
+    reward: 4000,
+    needsCar: null,
+    steps: [
+      {
+        type: 'pickupThenReach',
+        pickup: 'docks',
+        target: 'casino',
+        radius: 12,
+        timeLimit: 180,
+        setStars: -1,
+        spawnRivals: 0
+      }
+    ]
   }
 ];
+
+VB.race = {
+  name: 'Bayfront Sprint',
+  prize: 750,
+  timeLimit: 150,
+  start: { x: 0, z: 318, r: 12 },
+  checkpoints: [
+    { x: -111, z: 318 },
+    { x: -185, z: 185 },
+    { x: -185, z: -37 },
+    { x: -111, z: -185 },
+    { x: 37, z: -259 },
+    { x: 185, z: -111 },
+    { x: 185, z: 111 },
+    { x: 111, z: 259 }
+  ],
+  finish: { x: 0, z: 318 }
+};

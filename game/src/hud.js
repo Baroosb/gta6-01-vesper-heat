@@ -104,9 +104,9 @@ window.VB.hud = (function() {
       <div id="screen-title" style="position: fixed; inset: 0; background: radial-gradient(circle at center, #2e243f 0%, #120e18 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 30; padding: 20px; text-align: center; color: #fff;">
         <h1 style="font-size: 64px; font-weight: 900; color: #ff4fa3; text-shadow: 0 0 30px rgba(255,79,163,0.7); margin: 0 0 8px 0; letter-spacing: 3px;">VESPER HEAT</h1>
         <div style="font-size: 18px; color: #37e0d0; font-weight: 700; margin-bottom: 24px; text-shadow: 0 0 15px rgba(55,224,208,0.5);">Vesper Bay — golden hour, neon nights</div>
-        <p style="max-width: 550px; font-size: 14px; line-height: 1.5; color: #ddd; margin: 0 auto 24px auto;">Wheelman Rafa Mendes owes loan shark Vic Serrano $25,000. Fixer Sel Duarte has five jobs that pay it off before the bay burns down.</p>
+        <p style="max-width: 550px; font-size: 14px; line-height: 1.5; color: #ddd; margin: 0 auto 24px auto;">Wheelman Rafa Mendes owes loan shark Vic Serrano $25,000. Fixer Sel Duarte has six jobs that pay it off — and the Bayfront Sprint street race pays bonus cash to anyone fast enough. Clear the debt before the bay swallows you.</p>
         <div style="background: rgba(20,16,26,0.6); border: 1px solid rgba(255,154,60,0.3); border-radius: 8px; padding: 12px 20px; font-size: 12px; color: #ff9a3c; margin-bottom: 30px; max-width: 600px; line-height: 1.4;">
-          <strong>Controls:</strong> WASD move / mouse look / F enter-exit car / E talk-accept / Left Mouse fire / Shift run / Space handbrake / P pause
+          <strong>Controls:</strong> WASD move / mouse look / F enter-exit car / E talk-accept / Left Mouse fire / Shift run / Space handbrake / P pause / H horn / M radio
         </div>
         <div style="font-size: 20px; font-weight: 800; color: #37e0d0; animation: pulse 1.5s infinite; text-shadow: 0 0 10px rgba(55,224,208,0.8);">Click to play</div>
       </div>
@@ -129,7 +129,7 @@ window.VB.hud = (function() {
 
       <div id="screen-complete" style="position: fixed; inset: 0; background: rgba(14, 22, 28, 0.92); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 30; color: #fff; text-align: center; padding: 20px;">
         <h2 style="font-size: 56px; font-weight: 900; color: #37e0d0; text-shadow: 0 0 30px rgba(55,224,208,0.8); margin-bottom: 8px;">DEBT CLEARED</h2>
-        <p style="font-size: 16px; color: #ddd; max-width: 450px; margin-bottom: 24px; line-height: 1.5;">Vesper Bay is yours now, Rafa. Side jobs at Sel pay $300.</p>
+        <p style="font-size: 16px; color: #ddd; max-width: 450px; margin-bottom: 24px; line-height: 1.5;">The debt is paid and Vesper Bay is yours. Side jobs at Sel pay $300, and the Bayfront Sprint starts at the marina quay.</p>
         <div style="font-size: 18px; color: #ff9a3c; font-weight: 700;">Press R to keep roaming</div>
       </div>
     `;

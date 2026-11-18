@@ -19,6 +19,12 @@ window.VB = window.VB || {};
   let sirenInterval = null;
   let sirenRunning = false;
 
+  let radioTimer = null;
+  let radioStep = 0;
+  let radioGainNode = null;
+  const RADIO_BASS = [55, 55, 0, 55, 65.41, 0, 55, 0, 49, 49, 0, 49, 73.42, 0, 82.41, 0];
+  const RADIO_ARP = [220, 0, 261.63, 329.63, 0, 261.63, 220, 0, 196, 0, 246.94, 293.66, 329.63, 0, 261.63, 0];
+
   function createNoiseBuffer(audioCtx) {
     if (noiseBuffer) return noiseBuffer;
     const bufferSize = audioCtx.sampleRate * 2;
@@ -312,6 +318,107 @@ window.VB = window.VB || {};
         source.start();
         source.stop(ctx.currentTime + 0.05);
       } catch (e) {}
+    },
+
+    horn: function() {
+      if (!ctx) return;
+      try {
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(392, ctx.currentTime);
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(494, ctx.currentTime);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.10, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start();
+        osc2.start();
+        osc1.stop(ctx.currentTime + 0.32);
+        osc2.stop(ctx.currentTime + 0.32);
+      } catch (e) {}
+    },
+
+    radioToggle: function() {
+      if (!ctx) return false;
+      try {
+        if (radioTimer !== null) {
+          clearInterval(radioTimer);
+          radioTimer = null;
+          if (radioGainNode) {
+            try { radioGainNode.disconnect(); } catch (e) {}
+            radioGainNode = null;
+          }
+          return false;
+        }
+
+        radioGainNode = ctx.createGain();
+        radioGainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1600, ctx.currentTime);
+
+        radioGainNode.connect(filter);
+        filter.connect(ctx.destination);
+
+        radioStep = 0;
+        radioTimer = setInterval(() => {
+          if (!ctx || radioTimer === null) return;
+          try {
+            const step = radioStep % 16;
+            radioStep++;
+            const now = ctx.currentTime;
+
+            if (RADIO_BASS[step] > 0) {
+              const osc = ctx.createOscillator();
+              osc.type = 'sawtooth';
+              osc.frequency.setValueAtTime(RADIO_BASS[step], now);
+              const gain = ctx.createGain();
+              gain.gain.setValueAtTime(0.16, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+              osc.connect(gain);
+              gain.connect(radioGainNode);
+              osc.start(now);
+              osc.stop(now + 0.2);
+            }
+
+            if (RADIO_ARP[step] > 0) {
+              const osc = ctx.createOscillator();
+              osc.type = 'square';
+              osc.frequency.setValueAtTime(RADIO_ARP[step], now);
+              const gain = ctx.createGain();
+              gain.gain.setValueAtTime(0.05, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+              osc.connect(gain);
+              gain.connect(radioGainNode);
+              osc.start(now);
+              osc.stop(now + 0.09);
+            }
+          } catch (e) {}
+        }, 214);
+
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+
+    radioOn: function() {
+      if (!ctx) return false;
+      try {
+        return radioTimer !== null;
+      } catch (e) {
+        return false;
+      }
     }
   };
 })();

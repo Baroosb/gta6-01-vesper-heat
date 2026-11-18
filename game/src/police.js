@@ -314,6 +314,9 @@ window.VB.police = (function() {
               if (VB.audio && typeof VB.audio.crash === 'function') {
                 VB.audio.crash();
               }
+              if (VB.fx && VB.fx.sparks) {
+                VB.fx.sparks(car.x - Math.sin(car.heading) * 2, 0.5, car.z - Math.cos(car.heading) * 2, 10);
+              }
             }
             const pushFactor = 0.5;
             car.x += (pdx / (pdist || 1)) * pushFactor;

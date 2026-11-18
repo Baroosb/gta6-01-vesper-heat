@@ -24,6 +24,65 @@ window.VB.missions = (function() {
   let sideJobActive = false;
   let currentSideJob = null;
 
+  let raceActive = false;
+  let raceCp = 0;
+  let raceTimeLeft = 0;
+  let raceMarkerGroup = null;
+  let raceDialogShown = false;
+  let raceStartShown = false;
+
+  function setRaceMarker(x, z, radius) {
+    if (raceMarkerGroup) {
+      raceMarkerGroup.position.set(x, 0, z);
+      raceMarkerGroup.visible = true;
+      const rMesh = raceMarkerGroup.children[1];
+      if (rMesh) {
+        rMesh.geometry.dispose();
+        rMesh.geometry = new THREE.RingGeometry(radius - 0.7, radius, 40);
+        rMesh.geometry.rotateX(-Math.PI / 2);
+      }
+    }
+  }
+
+  function hideRaceMarker() {
+    if (raceMarkerGroup) {
+      raceMarkerGroup.visible = false;
+    }
+  }
+
+  function startRace() {
+    if (!VB.race) return;
+    raceActive = true;
+    raceCp = 0;
+    raceTimeLeft = VB.race.timeLimit;
+    raceDialogShown = false;
+    setRaceMarker(VB.race.checkpoints[0].x, VB.race.checkpoints[0].z, 10);
+    if (VB.audio && typeof VB.audio.success === 'function') {
+      VB.audio.success();
+    }
+  }
+
+  function endRace(won) {
+    raceActive = false;
+    hideRaceMarker();
+    if (won) {
+      if (VB.world && typeof VB.world.addCash === 'function') {
+        VB.world.addCash(VB.race.prize);
+      }
+      if (VB.audio) {
+        if (typeof VB.audio.cash === 'function') VB.audio.cash();
+        if (typeof VB.audio.success === 'function') VB.audio.success();
+      }
+      if (VB.hud && typeof VB.hud.toast === 'function') {
+        VB.hud.toast('Bayfront Sprint won: +$' + VB.race.prize);
+      }
+    }
+  }
+
+  function raceTarget() {
+    return raceCp < VB.race.checkpoints.length ? VB.race.checkpoints[raceCp] : VB.race.finish;
+  }
+
   function createRandom(seed) {
     let s = seed | 0;
     return function() {
@@ -71,6 +130,11 @@ window.VB.missions = (function() {
   }
 
   function cleanupActive() {
+    if (raceActive) {
+      raceActive = false;
+      hideRaceMarker();
+    }
+    raceStartShown = false;
     removeMissionCar();
     if (VB.people && typeof VB.people.clearRivals === 'function') {
       VB.people.clearRivals();
@@ -129,7 +193,7 @@ window.VB.missions = (function() {
 
   function init() {
     index = VB.world && typeof VB.world.missionIndex === 'number' ? VB.world.missionIndex : 0;
-    if (index >= 5) {
+    if (index >= (VB.story || []).length) {
       phase = 'done';
       objective = 'Side jobs available at Fixer Spot';
     } else {
@@ -169,6 +233,35 @@ window.VB.missions = (function() {
 
       scene.add(markerGroup);
       markerGroup.visible = false;
+
+      raceMarkerGroup = new THREE.Group();
+      const rCylGeo = new THREE.CylinderGeometry(1.2, 1.2, 30, 16);
+      rCylGeo.translate(0, 15, 0);
+      const rCylMat = new THREE.MeshBasicMaterial({
+        color: 0x37e0d0,
+        transparent: true,
+        opacity: 0.30,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const rCylMesh = new THREE.Mesh(rCylGeo, rCylMat);
+      raceMarkerGroup.add(rCylMesh);
+
+      const rRingGeo = new THREE.RingGeometry(10, 11, 32);
+      rRingGeo.rotateX(-Math.PI / 2);
+      const rRingMat = new THREE.MeshBasicMaterial({
+        color: 0x37e0d0,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false
+      });
+      const rRingMesh = new THREE.Mesh(rRingGeo, rRingMat);
+      rRingMesh.position.y = 0.05;
+      raceMarkerGroup.add(rRingMesh);
+
+      raceMarkerGroup.visible = false;
+      scene.add(raceMarkerGroup);
 
       // Health pack mesh: small white box with green cross
       const hpGroup = new THREE.Group();
@@ -515,6 +608,63 @@ window.VB.missions = (function() {
     } else {
       if (markerGroup) markerGroup.visible = false;
     }
+
+    // --- Bayfront Sprint race ---
+    if (raceActive && VB.race) {
+      raceTimeLeft -= dt;
+      if (raceTimeLeft <= 0) {
+        raceTimeLeft = 0;
+        endRace(false);
+        if (VB.hud && typeof VB.hud.toast === 'function') VB.hud.toast('Race over - out of time');
+      } else {
+        const rt = raceTarget();
+        const rdx = VB.player.x - rt.x;
+        const rdz = VB.player.z - rt.z;
+        if (VB.player.mode === 'car' && (rdx * rdx + rdz * rdz) < 100) {
+          if (raceCp < VB.race.checkpoints.length) {
+            raceCp++;
+            if (VB.audio && typeof VB.audio.cash === 'function') VB.audio.cash();
+            if (raceCp < VB.race.checkpoints.length) {
+              setRaceMarker(VB.race.checkpoints[raceCp].x, VB.race.checkpoints[raceCp].z, 10);
+            } else {
+              setRaceMarker(VB.race.finish.x, VB.race.finish.z, 12);
+            }
+          } else {
+            endRace(true);
+          }
+        }
+      }
+    } else if (!raceActive && VB.race && (phase === 'offer' || phase === 'done')) {
+      if (!raceStartShown) {
+        setRaceMarker(VB.race.start.x, VB.race.start.z, VB.race.start.r);
+        raceStartShown = true;
+      }
+      const sdx = VB.player.x - VB.race.start.x;
+      const sdz = VB.player.z - VB.race.start.z;
+      const startR = VB.race.start.r;
+      if ((sdx * sdx + sdz * sdz) < startR * startR) {
+        if (VB.player.mode === 'car') {
+          dialog = { lines: ['Bayfront Sprint - 8 checkpoints around the bay. Prize $750.'], hint: 'Press E to race' };
+          raceDialogShown = true;
+          if (VB.input.pressed('KeyE')) startRace();
+        } else {
+          dialog = { lines: ['Bayfront Sprint - bring a car to race.'], hint: '' };
+          raceDialogShown = true;
+        }
+      } else if (raceDialogShown) {
+        dialog = null;
+        raceDialogShown = false;
+      }
+    } else if (!raceActive) {
+      if (raceStartShown) {
+        hideRaceMarker();
+        raceStartShown = false;
+      }
+      if (raceDialogShown) {
+        dialog = null;
+        raceDialogShown = false;
+      }
+    }
   }
 
   function forceState(i, phaseName) {
@@ -525,11 +675,11 @@ window.VB.missions = (function() {
     if (phaseName === 'offer') {
       cleanupActive();
       phase = 'offer';
-      sideJobActive = (index >= 5);
+      sideJobActive = (index >= (VB.story || []).length);
       const m = getCurrentMission();
       objective = `Meet fixer for mission: ${m.title}`;
     } else if (phaseName === 'active') {
-      sideJobActive = (index >= 5);
+      sideJobActive = (index >= (VB.story || []).length);
       const m = getCurrentMission();
       phase = 'active';
       currentStepIdx = 0;
@@ -568,14 +718,25 @@ window.VB.missions = (function() {
     set index(v) { index = v; },
     get phase() { return phase; },
     set phase(v) { phase = v; },
-    get objective() { return objective; },
-    get targetPos() { return targetPos; },
+    get objective() {
+      if (raceActive && VB.race) {
+        return raceCp < VB.race.checkpoints.length ? 'Bayfront Sprint: checkpoint ' + (raceCp + 1) + '/' + VB.race.checkpoints.length + ' - prize $' + VB.race.prize : 'Bayfront Sprint: reach the finish! - prize $' + VB.race.prize;
+      }
+      return objective;
+    },
+    get targetPos() {
+      return (raceActive && VB.race) ? raceTarget() : targetPos;
+    },
     get dialog() { return dialog; },
-    get timer() { return timer; },
+    get timer() {
+      return raceActive ? raceTimeLeft : timer;
+    },
+    get raceActive() { return raceActive; },
     init,
     update,
     forceState,
     onWasted,
-    restart
+    restart,
+    startRace
   };
 })();
