@@ -34,19 +34,19 @@ VB.config = {
 };
 
 VB.landmarks = {
-  garage: { x: 52, z: -60, r: 14 },
-  fixerSpot: { x: 44, z: -46, r: 6 },
-  heroStart: { x: 40, z: -38, r: 3 },
-  neptuneHotel: { x: -120, z: 120, r: 14 },
-  casino: { x: 150, z: -160, r: 16 },
-  goldCoupeSpot: { x: 138, z: -146, r: 5 },
-  docks: { x: -200, z: 300, r: 18 },
-  marinaPickup: { x: 190, z: 318, r: 10 },
-  boat: { x: 215, z: 330, r: 12 },
-  bank: { x: -60, z: -190, r: 14 },
-  hideout: { x: -230, z: 230, r: 16 },
-  hospital: { x: 230, z: 60, r: 14 },
-  policeStation: { x: -40, z: 250, r: 14 }
+  garage: { x: 52, z: -60, r: 14, label: "Duarte Motors" },
+  fixerSpot: { x: 44, z: -46, r: 6, label: "Sel's Corner" },
+  heroStart: { x: 40, z: -38, r: 3, label: "Rafa's Block" },
+  neptuneHotel: { x: -120, z: 120, r: 14, label: "Neptune Hotel" },
+  casino: { x: 150, z: -160, r: 16, label: "The Gilded Palm" },
+  goldCoupeSpot: { x: 138, z: -146, r: 5, label: "Casino Valet" },
+  docks: { x: -200, z: 300, r: 18, label: "Docks Warehouse" },
+  marinaPickup: { x: 190, z: 318, r: 10, label: "Marina Dock" },
+  boat: { x: 215, z: 330, r: 12, label: "Sel's Boat" },
+  bank: { x: -60, z: -190, r: 14, label: "Serrano Bank" },
+  hideout: { x: -230, z: 230, r: 16, label: "Sel's Hideout" },
+  hospital: { x: 230, z: 60, r: 14, label: "Bay General Hospital" },
+  policeStation: { x: -40, z: 250, r: 14, label: "VBPD Station" }
 };
 
 VB.story = [
@@ -161,6 +161,46 @@ VB.story = [
         target: 'casino',
         radius: 12,
         timeLimit: 180,
+        setStars: -1,
+        spawnRivals: 0
+      }
+    ]
+  },
+  {
+    id: 'night-deposit',
+    title: 'Night Deposit',
+    giverLine: 'The Gilded Palm banks its night deposit at the casino vault after close. Lift it and run it down to the docks warehouse — the VBPD will not wave you through.',
+    reward: 5000,
+    needsCar: null,
+    steps: [
+      {
+        type: 'pickupThenReach',
+        pickup: 'casino',
+        target: 'docks',
+        radius: 12,
+        timeLimit: 165,
+        setStars: 3,
+        spawnRivals: 0
+      }
+    ]
+  },
+  {
+    id: 'bay-king',
+    title: 'Bay King',
+    giverLine: 'Last job, Rafa — Serrano\'s gold coupe, the one he never lets out of the casino valet. Take it, shake the heat, and put it on my boat at the marina. Then the bay is yours.',
+    reward: 7500,
+    needsCar: {
+      kind: 'sedan',
+      color: 0xd8a928,
+      atLandmark: 'goldCoupeSpot'
+    },
+    steps: [
+      {
+        type: 'deliverCar',
+        pickup: null,
+        target: 'boat',
+        radius: 12,
+        timeLimit: 240,
         setStars: -1,
         spawnRivals: 0
       }

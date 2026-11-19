@@ -102,6 +102,15 @@ window.VB.missions = (function() {
     return { x: 0, z: 0, r: 10 };
   }
 
+  function getLandmarkLabel(name) {
+    if (!name) return '';
+    const lm = VB.landmarks && VB.landmarks[name];
+    if (lm && lm.label) {
+      return lm.label;
+    }
+    return name;
+  }
+
   function getGiverLandmark(mission) {
     if (mission && mission.giver && mission.giver.landmark) {
       return getLandmark(mission.giver.landmark);
@@ -206,12 +215,12 @@ window.VB.missions = (function() {
       const scene = VB.world.scene;
       markerGroup = new THREE.Group();
 
-      const cylGeo = new THREE.CylinderGeometry(1.2, 1.2, 30, 16);
+      const cylGeo = new THREE.CylinderGeometry(0.8, 0.8, 30, 16);
       cylGeo.translate(0, 15, 0);
       const cylMat = new THREE.MeshBasicMaterial({
         color: 0xffd700,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.22,
         blending: THREE.AdditiveBlending,
         depthWrite: false
       });
@@ -373,13 +382,13 @@ window.VB.missions = (function() {
       stepState = 'headingToPickup';
       const plm = getLandmark(activeStep.pickup);
       targetPos = { x: plm.x, z: plm.z };
-      objective = `Go to pickup: ${activeStep.pickup}`;
+      objective = `Go to pickup: ${getLandmarkLabel(activeStep.pickup)}`;
       timer = null; // timer runs from pickup
     } else {
       stepState = 'headingToTarget';
       const tlm = getLandmark(activeStep.target);
       targetPos = { x: tlm.x, z: tlm.z };
-      objective = `Reach target: ${activeStep.target} (${m.title})`;
+      objective = `Reach target: ${getLandmarkLabel(activeStep.target)} (${m.title})`;
       timer = activeStep.timeLimit > 0 ? activeStep.timeLimit : null;
     }
   }
@@ -548,10 +557,18 @@ window.VB.missions = (function() {
           stepState = 'headingToTarget';
           const tlm = getLandmark(activeStep.target);
           targetPos = { x: tlm.x, z: tlm.z };
-          objective = `Deliver to: ${activeStep.target}`;
+          objective = `Deliver to: ${getLandmarkLabel(activeStep.target)}`;
           timer = activeStep.timeLimit > 0 ? activeStep.timeLimit : null;
           if (VB.audio && typeof VB.audio.cash === 'function') {
             VB.audio.cash();
+          }
+          if (activeStep.setStars !== undefined && activeStep.setStars >= 0) {
+            if (VB.police && typeof VB.police.setStars === 'function') {
+              VB.police.setStars(activeStep.setStars);
+            }
+            if (VB.police && typeof VB.police.lock === 'function') {
+              VB.police.lock();
+            }
           }
         }
       } else if (activeStep.type === 'clearRivals') {

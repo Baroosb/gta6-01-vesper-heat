@@ -54,28 +54,44 @@ window.VB.shots = (function() {
       if (shotName === 'vista') {
         const hero = VB.cars.heroCar;
         if (hero) {
-          hero.x = 4;
-          hero.z = 320;
-          hero.heading = -1.0;
+          hero.x = -120;
+          hero.z = 322;
+          hero.heading = -Math.PI / 2;
           hero.speed = 0;
-          hero.mesh.position.set(4, 0, 320);
-          hero.mesh.rotation.y = -1.0;
+          hero.mesh.position.set(-120, 0, 322);
+          hero.mesh.rotation.y = -Math.PI / 2;
         }
         VB.player.mode = 'foot';
         VB.player.car = null;
-        VB.player.x = 14;
-        VB.player.z = 313;
-        const targetDx = 4 - 14;
-        const targetDz = 320 - 313;
+        VB.player.x = -117.5;
+        VB.player.z = 318;
+        const targetDx = -120 - (-117.5);
+        const targetDz = 322 - 318;
         const pHeading = Math.atan2(-targetDx, -targetDz);
         VB.player.heading = pHeading;
         if (VB.player.mesh) {
           VB.player.mesh.visible = true;
-          VB.player.mesh.position.set(14, 0, 313);
+          VB.player.mesh.position.set(-117.5, 0, 318);
           VB.player.mesh.rotation.y = pHeading;
         }
-        step(90);
-        setCam(16, 12, 352, -10, 7, 190);
+        const carA = VB.cars.spawnScripted({ kind: 'coupe', color: 0xe2725b, x: -185, z: 311, heading: Math.PI / 2 });
+        if (carA) {
+          carA.avenue = { axis: 'x', at: 318 };
+          carA.dir = -1;
+          carA.speed = 11;
+          carA.targetSpeed = 11;
+          carA.parked = false;
+        }
+        const carB = VB.cars.spawnScripted({ kind: 'sedan', color: 0x224488, x: -55, z: 325, heading: -Math.PI / 2 });
+        if (carB) {
+          carB.avenue = { axis: 'x', at: 318 };
+          carB.dir = 1;
+          carB.speed = 11;
+          carB.targetSpeed = 11;
+          carB.parked = false;
+        }
+        step(60);
+        setCam(-134, 3.4, 339, -96, 2.5, 298);
         finish();
       } else if (shotName === 'drive') {
         VB.missions.forceState(0, 'active');
@@ -113,6 +129,15 @@ window.VB.shots = (function() {
         }
         VB.cars.spawnScripted({ kind: 'convertible', color: 0xf2e394, x: 31.2, z: hz - 13, heading: 0 });
         VB.cars.spawnScripted({ kind: 'truck', color: 0x7fb2e5, x: 43.8, z: hz - 44, heading: Math.PI });
+        const sedan = VB.cars.spawnScripted({ kind: 'sedan', color: 0x224488, x: 33.2, z: hz - 20, heading: Math.PI });
+        if (sedan) {
+          sedan.avenue = { axis: 'z', at: 37 };
+          sedan.dir = 1;
+          sedan.speed = 11;
+          sedan.targetSpeed = 11;
+          sedan.parked = false;
+        }
+        VB.cars.spawnScripted({ kind: 'pickup', color: 0x7fc8a9, x: 43.8, z: hz + 10, heading: 0 });
         finish();
       } else if (shotName === 'chase') {
         VB.missions.forceState(2, 'active');
@@ -130,7 +155,16 @@ window.VB.shots = (function() {
           if (VB.player.mesh) VB.player.mesh.visible = false;
           VB.player.autopilot = { throttle: 0.85, steer: 0 };
         }
-        VB.police.setStars(3);
+        VB.police.setStars(4);
+
+        const coupeChase = VB.cars.spawnScripted({ kind: 'coupe', color: 0xe2725b, x: -37, z: 110, heading: 0 });
+        if (coupeChase) {
+          coupeChase.avenue = { axis: 'z', at: -37 };
+          coupeChase.dir = -1;
+          coupeChase.speed = 11;
+          coupeChase.targetSpeed = 11;
+          coupeChase.parked = false;
+        }
 
         for (let chunk = 0; chunk < 6; chunk++) {
           step(10);
@@ -151,13 +185,20 @@ window.VB.shots = (function() {
 
         if (hero && VB.cars && VB.cars.all) {
           let nearestPolice = null;
+          let secondNearestPolice = null;
           let minDist = Infinity;
+          let secondMinDist = Infinity;
           for (const c of VB.cars.all) {
             if (c.isPolice) {
               const dist = Math.sqrt((c.x - hero.x)**2 + (c.z - hero.z)**2);
               if (dist < minDist) {
+                secondMinDist = minDist;
+                secondNearestPolice = nearestPolice;
                 minDist = dist;
                 nearestPolice = c;
+              } else if (dist < secondMinDist) {
+                secondMinDist = dist;
+                secondNearestPolice = c;
               }
             }
           }
@@ -182,6 +223,27 @@ window.VB.shots = (function() {
               nearestPolice.mesh.rotation.y = intHeading;
             }
           }
+          if (secondNearestPolice) {
+            const h = hero.heading;
+            const fx = -Math.sin(h);
+            const fz = -Math.cos(h);
+            const rx = Math.cos(h);
+            const rz = -Math.sin(h);
+            const intX2 = hero.x + fx * 12 - rx * 6;
+            const intZ2 = hero.z + fz * 12 - rz * 6;
+            const pDx2 = hero.x - intX2;
+            const pDz2 = hero.z - intZ2;
+            const intHeading2 = Math.atan2(-pDx2, -pDz2);
+
+            secondNearestPolice.x = intX2;
+            secondNearestPolice.z = intZ2;
+            secondNearestPolice.heading = intHeading2;
+            secondNearestPolice.speed = 0;
+            if (secondNearestPolice.mesh) {
+              secondNearestPolice.mesh.position.set(intX2, 0, intZ2);
+              secondNearestPolice.mesh.rotation.y = intHeading2;
+            }
+          }
         }
 
         if (hero) {
@@ -202,8 +264,11 @@ window.VB.shots = (function() {
             VB.fx.skid(bx + rx * 0.95, bz + rz * 0.95, h, 1.7);
             VB.fx.skid(bx - rx * 0.95, bz - rz * 0.95, h, 1.7);
           }
-          VB.fx.sparks(hero.x + fx * 2.2 + rx * 0.9, 0.5, hero.z + fz * 2.2 + rz * 0.9, 26);
+          VB.fx.sparks(hero.x + fx * 2.2 + rx * 0.9, 0.5, hero.z + fz * 2.2 + rz * 0.9, 40);
         }
+        VB.fx.exhaust(hero);
+        VB.fx.exhaust(hero);
+        VB.fx.exhaust(hero);
         finish();
       } else if (shotName === 'race') {
         const hero = VB.cars.heroCar;
@@ -253,12 +318,14 @@ window.VB.shots = (function() {
           VB.player.mesh.rotation.y = heading;
         }
 
+        VB.cars.spawnScripted({ kind: 'coupe', color: 0x338833, x: docks.x + 8, z: docks.z + 8, heading: 0 });
+
         for (let chunk = 0; chunk < 10; chunk++) {
           step(10);
         }
         const fx = -Math.sin(heading);
         const fz = -Math.cos(heading);
-        setCam(px - fx * 5.5, 2.1, pz - fz * 5.5, docks.x, 1.2, docks.z);
+        setCam(px - fx * 7, 2.6, pz - fz * 7, docks.x, 1.2, docks.z);
         finish();
       } else {
         setCam(40, 15, -20, 40, 0, -38);
