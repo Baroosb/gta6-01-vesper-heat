@@ -1,6 +1,6 @@
 [
-  { "name": "1-vista.jpg", "query": "?shot=vista" },
+  { "name": "1-chase.jpg", "query": "?shot=chase" },
   { "name": "2-drive.jpg", "query": "?shot=drive" },
-  { "name": "3-chase.jpg", "query": "?shot=chase" },
-  { "name": "4-race.jpg", "query": "?shot=race" }
+  { "name": "3-vista.jpg", "query": "?shot=vista" },
+  { "name": "4-mission.jpg", "query": "?shot=mission" }
 ]

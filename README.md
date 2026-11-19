@@ -4,7 +4,7 @@
 [![rank](https://make.fun/badge/gta6-01/Baroosb/gta6-01-vesper-heat/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![reward](https://make.fun/badge/gta6-01/Baroosb/gta6-01-vesper-heat/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
-VESPER HEAT is an original open-world crime game set in Vesper Bay, a dusk-lit bay city. Play wheelman Rafa Mendes: explore on foot and by car, steal vehicles, run a six-mission story chain to pay off a $25,000 debt, and take the Bayfront Sprint checkpoint race. Traffic AI, pedestrians, a 0-5 star wanted system with police pursuit and bust meter, on-foot combat, a full HUD with live minimap, and localStorage saves. Built with vendored three.js, plain static files, no network requests, fully offline in desktop Chrome. All content is original.
+VESPER HEAT is an original open-world crime game set in Vesper Bay, a dusk-lit bay city. Play wheelman Rafa Mendes: explore on foot and by car, steal vehicles, run an eight-mission story chain to pay off a $25,000 debt, and take the Bayfront Sprint checkpoint race. Traffic AI, pedestrians, a 0-5 star wanted system with police pursuit and bust meter, on-foot combat, a full HUD with live minimap, and localStorage saves. Built with vendored three.js, plain static files, no network requests, fully offline in desktop Chrome. All content is original.
 
 ## Run it
 
